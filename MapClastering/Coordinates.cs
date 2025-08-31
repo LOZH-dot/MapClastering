@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MapClastering
 {
-    internal class Coordinates
+    public class Coordinates
     {
         public string Address { get; set; }
         public double Latitude { get; set; }

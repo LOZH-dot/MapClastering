@@ -1,31 +1,52 @@
-﻿using System.Globalization;
+﻿using Telegram.Bot.Polling;
+using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types;
+using MapClastering;
+using System.Globalization;
 using System.Text.Json;
 
-namespace MapClastering
+namespace MapClasteringTelegramBot
 {
     internal class Program
     {
-        static HttpClient client = new HttpClient();
-
+        private static ITelegramBotClient _botClient { get; set; }
+        private static ReceiverOptions _receiverOptions { get; set; }
+        private static HttpClient client = new HttpClient();
         static async Task Main(string[] args)
         {
-            // Входной массив адресов
-            string[] addresses = new string[]
+            _botClient = new TelegramBotClient("8249706098:AAFh-cwpwpe8T02n2HlrQSnRza5htZZH2ro");
+
+            _receiverOptions = new ReceiverOptions
             {
-                "Владимир, Лакина, 2",
-                "Владимир, Лакина, 2А",
-
-                "Владимир, Тракторная, 58",
-                "Владимир, Тракторная, 1",
-                "Владимир, Промышленный проезд, 5",
-
-                "Владимир, Верхняя Дуброва, 6",
-                "Владимир, Верхняя Дуброва 22",
+                AllowedUpdates = new[]
+    {
+                    UpdateType.Message
+                },
+                DropPendingUpdates = true
             };
+
+            using var cts = new CancellationTokenSource();
+            _botClient.StartReceiving(UpdateHandler, ErrorHandler, _receiverOptions, cts.Token);
+
+            await Task.Delay(-1);
+        }
+
+        private static async Task ErrorHandler(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static async Task UpdateHandler(ITelegramBotClient client, Update update, CancellationToken token)
+        {
+            var message = update.Message;
+            var from = message!.From;
+
+            string[] adresses = message.Text.Split('\n');
 
             // Геокодируем адреса
             List<Coordinates> coordsList = new List<Coordinates>();
-            foreach (var address in addresses)
+            foreach (var address in adresses)
             {
                 var coords = await GeocodeAddress(address);
                 if (coords != null)
@@ -36,21 +57,23 @@ namespace MapClastering
             }
 
             // Параметр кластеризации: максимальное расстояние в метрах внутри кластера
-            double maxClusterDistance = 500; // 2 км
+            double maxClusterDistance = 500; 
             Console.WriteLine($"Максимальное расстояние между двумя точками: {maxClusterDistance} метров");
 
             // Кластеризация
             var clusters = ClusterCoordinates(coordsList, maxClusterDistance);
-
+            var result = string.Empty;
             // Вывод результатов
             for (int i = 0; i < clusters.Count; i++)
             {
-                Console.WriteLine($"Кластер {i + 1}:");
+                result += ($"Кластер {i + 1}:\n");
                 foreach (var coord in clusters[i])
                 {
-                    Console.WriteLine($"  {coord.Address} ({coord.Latitude}, {coord.Longitude})");
+                    result += ($"  {coord.Address} ({coord.Latitude}, {coord.Longitude})\n");
                 }
             }
+
+            await client.SendMessage(message.Chat, result);
         }
 
         static async Task<Coordinates> GeocodeAddress(string address)
@@ -86,7 +109,7 @@ namespace MapClastering
                     return null;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка при geocode адреса {address}: {ex.Message}");
                 return null;
