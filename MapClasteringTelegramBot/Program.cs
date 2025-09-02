@@ -57,11 +57,13 @@ namespace MapClasteringTelegramBot
 
             // Параметр кластеризации: максимальное расстояние в метрах внутри кластера
             double maxClusterDistance = 500; 
-            Console.WriteLine($"Максимальное расстояние между двумя точками: {maxClusterDistance} метров");
 
             // Кластеризация
             var clusters = ClusterCoordinates(coordsList, maxClusterDistance);
             var result = string.Empty;
+
+            result += $"Максимальное расстояние между двумя точками: {maxClusterDistance} метров\n\n";
+
             // Вывод результатов
             for (int i = 0; i < clusters.Count; i++)
             {
@@ -70,6 +72,7 @@ namespace MapClasteringTelegramBot
                 {
                     result += ($"  {coord.Address} ({coord.Latitude}, {coord.Longitude})\n");
                 }
+                result += '\n';
             }
 
             await client.SendMessage(message.Chat, result);

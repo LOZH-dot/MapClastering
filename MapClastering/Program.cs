@@ -10,27 +10,27 @@ namespace MapClastering
         static async Task Main(string[] args)
         {
             // Входной массив адресов
-            string[] addresses = new string[]
+            Application[] applications = new Application[]
             {
-                "Владимир, Лакина, 2",
-                "Владимир, Лакина, 2А",
+                new Application { Address = "Владимир, Лакина, 2", Type = ApplicationType.G_PON },
+                new Application { Address = "Владимир, Лакина, 2А", Type = ApplicationType.G_PON },
 
-                "Владимир, Тракторная, 58",
-                "Владимир, Тракторная, 1",
-                "Владимир, Промышленный проезд, 5",
+                new Application { Address = "Владимир, Тракторная, 58", Type = ApplicationType.PACKET },
+                new Application { Address = "Владимир, Тракторная, 1", Type = ApplicationType.G_PON },
+                new Application { Address = "Владимир, Промышленный проезд, 5", Type = ApplicationType.PACKET },
 
-                "Владимир, Верхняя Дуброва, 6",
-                "Владимир, Верхняя Дуброва 22",
+                new Application { Address = "Владимир, Верхняя Дуброва, 6", Type = ApplicationType.G_PON },
+                new Application { Address = "Владимир, Верхняя Дуброва 22", Type = ApplicationType.PACKET },
             };
 
             // Геокодируем адреса
             List<Coordinates> coordsList = new List<Coordinates>();
-            foreach (var address in addresses)
+            foreach (var application in applications)
             {
-                var coords = await GeocodeAddress(address);
+                var coords = await GeocodeAddress(application.Address);
                 if (coords != null)
                 {
-                    coords.Address = address;
+                    coords.Address = application.Address;
                     coordsList.Add(coords);
                 }
             }
