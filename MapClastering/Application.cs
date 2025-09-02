@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MapClastering
 {
-    internal class Application
+    public class Application
     {
         public string Address {  get; set; }
         public ApplicationType Type { get; set; }

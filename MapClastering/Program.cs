@@ -30,7 +30,7 @@ namespace MapClastering
                 var coords = await GeocodeAddress(application.Address);
                 if (coords != null)
                 {
-                    coords.Address = application.Address;
+                    coords.Application = application;
                     coordsList.Add(coords);
                 }
             }
@@ -42,13 +42,13 @@ namespace MapClastering
             // Кластеризация
             var clusters = ClusterCoordinates(coordsList, maxClusterDistance);
 
-            // Вывод результатов
+            // Вывод результатов g-pon
             for (int i = 0; i < clusters.Count; i++)
             {
-                Console.WriteLine($"Кластер {i + 1}:");
+                Console.WriteLine($"Кластер {i + 1}");
                 foreach (var coord in clusters[i])
                 {
-                    Console.WriteLine($"  {coord.Address} ({coord.Latitude}, {coord.Longitude})");
+                    Console.WriteLine($"  {coord.Application.Address} ({coord.Latitude}, {coord.Longitude}) - {coord.Application.Type.ToString()}");
                 }
             }
         }
@@ -96,7 +96,9 @@ namespace MapClastering
         static List<List<Coordinates>> ClusterCoordinates(List<Coordinates> coords, double maxDistance)
         {
             var clusters = new List<List<Coordinates>>();
-            var unassigned = new List<Coordinates>(coords);
+
+            // для G-PON
+            var unassigned = new List<Coordinates>(coords.Where(x => x.Application.Type == ApplicationType.G_PON));
 
             while (unassigned.Count > 0)
             {
@@ -115,7 +117,41 @@ namespace MapClastering
                         // Проверка, если точка в пределах maxDistance от любой точки в кластере
                         foreach (var c in cluster)
                         {
-                            if (HaversineDistance(c.Latitude, c.Longitude, point.Latitude, point.Longitude) <= maxDistance)
+                            if ((HaversineDistance(c.Latitude, c.Longitude, point.Latitude, point.Longitude) <= maxDistance))
+                            {
+                                cluster.Add(point);
+                                unassigned.RemoveAt(i);
+                                added = true;
+                                break;
+                            }
+                        }
+                    }
+                } while (added);
+                clusters.Add(cluster);
+            }
+
+            // Для PACKET
+
+            unassigned = new List<Coordinates>(coords.Where(x => x.Application.Type == ApplicationType.PACKET));
+
+            while (unassigned.Count > 0)
+            {
+                var cluster = new List<Coordinates>();
+                var seed = unassigned[0];
+                cluster.Add(seed);
+                unassigned.RemoveAt(0);
+
+                bool added;
+                do
+                {
+                    added = false;
+                    for (int i = unassigned.Count - 1; i >= 0; i--)
+                    {
+                        var point = unassigned[i];
+                        // Проверка, если точка в пределах maxDistance от любой точки в кластере
+                        foreach (var c in cluster)
+                        {
+                            if ((HaversineDistance(c.Latitude, c.Longitude, point.Latitude, point.Longitude) <= maxDistance))
                             {
                                 cluster.Add(point);
                                 unassigned.RemoveAt(i);
@@ -130,6 +166,7 @@ namespace MapClastering
 
             return clusters;
         }
+
 
         // Расчет расстояния между двумя точками по формуле Haversine
         static double HaversineDistance(double lat1, double lon1, double lat2, double lon2)
