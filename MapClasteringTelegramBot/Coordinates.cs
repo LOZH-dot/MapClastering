@@ -8,7 +8,7 @@ namespace MapClasteringTelegramBot
 {
     internal class Coordinates
     {
-        public string Address { get; set; }
+        public Application Application { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
     }

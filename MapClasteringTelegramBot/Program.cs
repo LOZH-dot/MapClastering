@@ -41,16 +41,28 @@ namespace MapClasteringTelegramBot
             var message = update.Message;
             var from = message!.From;
 
-            string[] adresses = message.Text.Split('\n');
+            // Входной массив адресов
+            Application[] applications = new Application[]
+            {
+                new Application { Address = "Владимир, Лакина, 2", Type = ApplicationType.G_PON },
+                new Application { Address = "Владимир, Лакина, 2А", Type = ApplicationType.G_PON },
+
+                new Application { Address = "Владимир, Тракторная, 58", Type = ApplicationType.PACKET },
+                new Application { Address = "Владимир, Тракторная, 1", Type = ApplicationType.G_PON },
+                new Application { Address = "Владимир, Промышленный проезд, 5", Type = ApplicationType.PACKET },
+
+                new Application { Address = "Владимир, Верхняя Дуброва, 6", Type = ApplicationType.G_PON },
+                new Application { Address = "Владимир, Верхняя Дуброва 22", Type = ApplicationType.PACKET },
+            };
 
             // Геокодируем адреса
             List<Coordinates> coordsList = new List<Coordinates>();
-            foreach (var address in adresses)
+            foreach (var application in applications)
             {
-                var coords = await GeocodeAddress(address);
+                var coords = await GeocodeAddress(application.Address);
                 if (coords != null)
                 {
-                    coords.Address = address;
+                    coords.Application = application;
                     coordsList.Add(coords);
                 }
             }
@@ -70,7 +82,7 @@ namespace MapClasteringTelegramBot
                 result += ($"Кластер {i + 1}:\n");
                 foreach (var coord in clusters[i])
                 {
-                    result += ($"  {coord.Address} ({coord.Latitude}, {coord.Longitude})\n");
+                    result += ($"  {coord.Application.Address} ({coord.Latitude}, {coord.Longitude}) - {coord.Application.Type.ToString()}\n");
                 }
                 result += '\n';
             }
@@ -121,7 +133,9 @@ namespace MapClasteringTelegramBot
         static List<List<Coordinates>> ClusterCoordinates(List<Coordinates> coords, double maxDistance)
         {
             var clusters = new List<List<Coordinates>>();
-            var unassigned = new List<Coordinates>(coords);
+
+            // для G-PON
+            var unassigned = new List<Coordinates>(coords.Where(x => x.Application.Type == ApplicationType.G_PON));
 
             while (unassigned.Count > 0)
             {
@@ -140,7 +154,7 @@ namespace MapClasteringTelegramBot
                         // Проверка, если точка в пределах maxDistance от любой точки в кластере
                         foreach (var c in cluster)
                         {
-                            if (HaversineDistance(c.Latitude, c.Longitude, point.Latitude, point.Longitude) <= maxDistance)
+                            if ((HaversineDistance(c.Latitude, c.Longitude, point.Latitude, point.Longitude) <= maxDistance))
                             {
                                 cluster.Add(point);
                                 unassigned.RemoveAt(i);
@@ -152,6 +166,42 @@ namespace MapClasteringTelegramBot
                 } while (added);
                 clusters.Add(cluster);
             }
+
+            // Для PACKET
+
+            unassigned = new List<Coordinates>(coords.Where(x => x.Application.Type == ApplicationType.PACKET));
+
+            while (unassigned.Count > 0)
+            {
+                var cluster = new List<Coordinates>();
+                var seed = unassigned[0];
+                cluster.Add(seed);
+                unassigned.RemoveAt(0);
+
+                bool added;
+                do
+                {
+                    added = false;
+                    for (int i = unassigned.Count - 1; i >= 0; i--)
+                    {
+                        var point = unassigned[i];
+                        // Проверка, если точка в пределах maxDistance от любой точки в кластере
+                        foreach (var c in cluster)
+                        {
+                            if ((HaversineDistance(c.Latitude, c.Longitude, point.Latitude, point.Longitude) <= maxDistance))
+                            {
+                                cluster.Add(point);
+                                unassigned.RemoveAt(i);
+                                added = true;
+                                break;
+                            }
+                        }
+                    }
+                } while (added);
+                clusters.Add(cluster);
+            }
+
+
 
             return clusters;
         }
