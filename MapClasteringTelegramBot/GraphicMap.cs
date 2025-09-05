@@ -34,8 +34,13 @@ namespace MapClasteringTelegramBot
             List<string> ptParams = new List<string>();
             foreach (var p in points)
             {
-                // 'pm2rdm' - маркер с красным лицом, можно выбрать другой стиль
-                ptParams.Add($"{p.Longitude.ToString().Replace(',', '.')},{p.Latitude.ToString().Replace(',', '.')},pm2rdm");
+                if (p.Application.Type == ApplicationType.G_PON)
+                    // 'pm2rdm' - маркер с красным лицом
+                    ptParams.Add($"{p.Longitude.ToString().Replace(',', '.')},{p.Latitude.ToString().Replace(',', '.')},pm2rdm");
+                else if (p.Application.Type == ApplicationType.PACKET)
+                    // 'pm2dbm' - маркер с синим лицом
+                    ptParams.Add($"{p.Longitude.ToString().Replace(',', '.')},{p.Latitude.ToString().Replace(',', '.')},pm2dbm");
+
             }
             string ptString = string.Join("|", ptParams);
 
