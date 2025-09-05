@@ -12,41 +12,14 @@ namespace MapClasteringTelegramBot
     {
         public static string GenerateStaticMapUrl(List<Coordinates> points)
         {
-            // Находим минимальные и максимальные координаты
-            double minLon = double.MaxValue;
-            double maxLon = double.MinValue;
-            double minLat = double.MaxValue;
-            double maxLat = double.MinValue;
-
-            foreach (var point in points)
-            {
-                if (point.Longitude < minLon) minLon = point.Longitude;
-                if (point.Longitude > maxLon) maxLon = point.Longitude;
-                if (point.Latitude < minLat) minLat = point.Latitude;
-                if (point.Latitude > maxLat) maxLat = point.Latitude;
-            }
-
-            // Центр карты
-            double centerLon = (minLon + maxLon) / 2;
-            double centerLat = (minLat + maxLat) / 2;
-
-            // Диапазоны широты и долготы
-            double deltaLon = maxLon - minLon;
-            double deltaLat = maxLat - minLat;
-
-            // Размер изображения в пикселях
-            int width = 600;
-            int height = 450;
-
-            int zoom = CalculateZoomLevel(points, minLat, maxLat, minLon, maxLon);
-
             // Используем сервис Static Map API
             // Для этого примера возьмем [Static Map API от Yandex](https://tech.yandex.ru/maps/doc/geosearch/concepts/static-docpage/)
             // Их формат URL:
             // https://static-maps.yandex.ru/1.x/?ll=37.6173,55.7558&size=450,450&z=10&l=map&pt=37.6173,55.7558,pm2rdm|37.6491,55.6924,pm2rdm
 
             string baseUrl = "https://static-maps.yandex.ru/1.x/";
-
+            int width = 600;
+            int height = 450;
             // Формируем строку точек
             List<string> ptParams = new List<string>();
             foreach (var p in points)
@@ -61,7 +34,7 @@ namespace MapClasteringTelegramBot
             }
             string ptString = string.Join("|", ptParams);
 
-            string url = $"{baseUrl}?ll={centerLon.ToString().Replace(',', '.')},{centerLat.ToString().Replace(',', '.')}&size={width},{height}&z={zoom}&l=map&pt={ptString}";
+            string url = $"{baseUrl}?size={width},{height}&l=map&pt={ptString}";
             return url;
         }
 

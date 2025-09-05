@@ -72,7 +72,7 @@ namespace MapClasteringTelegramBot.Bot
                     AllPoints.Add(point);
 
 
-            string mapUrl = GraphicMap.GenerateStaticMapUrl(clusters[3]);
+            string mapUrl = GraphicMap.GenerateStaticMapUrl(AllPoints);
 
             // Загружаем изображение карты
             byte[] imageBytes = await GraphicMap.DownloadImageAsync(mapUrl);
