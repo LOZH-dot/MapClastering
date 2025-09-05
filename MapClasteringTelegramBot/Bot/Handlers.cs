@@ -43,7 +43,7 @@ namespace MapClasteringTelegramBot.Bot
             }
 
             // Параметр кластеризации: максимальное расстояние в метрах внутри кластера
-            double maxClusterDistance = 500;
+            double maxClusterDistance = 1000;
 
             // Кластеризация
             var clusters = Clasterization.ClusterCoordinates(coordsList, maxClusterDistance);
@@ -72,7 +72,7 @@ namespace MapClasteringTelegramBot.Bot
                     AllPoints.Add(point);
 
 
-            string mapUrl = GraphicMap.GenerateStaticMapUrl(AllPoints);
+            string mapUrl = GraphicMap.GenerateStaticMapUrl(clusters[3]);
 
             // Загружаем изображение карты
             byte[] imageBytes = await GraphicMap.DownloadImageAsync(mapUrl);
